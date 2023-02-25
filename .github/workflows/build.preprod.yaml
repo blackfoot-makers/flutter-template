@@ -1,0 +1,63 @@
+name: build.preprod
+on:
+  pull_request:
+    types: [ready_for_review]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build_android:
+    runs-on: [self-hosted, Linux]
+    env:
+      JAVA_HOME: /opt/hostedtoolcache/Java_Zulu_jdk/11.0.18-10/x64
+      JAVA_HOME_11_X64: /opt/hostedtoolcache/Java_Zulu_jdk/11.0.18-10/x64
+      ANDROID_HOME: /home/runner/.android/sdk
+      ANDROID_SDK_ROOT: /home/runner/.android/sdk
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Restore cache android
+        id: cache-android-platform-restore
+        uses: actions/cache/restore@v3
+        with:
+          path: |
+            /home/runner/.android
+            /opt/hostedtoolcache/Java_Zulu_jdk/11.0.18-10/x64
+          key: ${{ runner.os }}-android-platform
+
+      - name: Setup java env
+        if: steps.cache-android-platform-restore.outputs.cache-hit != 'true'
+        uses: actions/setup-java@v3
+        with:
+          distribution: "zulu"
+          java-version: "11"
+          cache: "gradle"
+      - name: Setup android sdk
+        if: steps.cache-android-platform-restore.outputs.cache-hit != 'true'
+        uses: android-actions/setup-android@v2
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+          cache: true
+      - run: flutter build apk
+
+      - name: Cache android platforms
+        id: cache-android-platform-save
+        uses: actions/cache/save@v3
+        with:
+          path: |
+            /home/runner/.android
+            /opt/hostedtoolcache/Java_Zulu_jdk/11.0.18-10/x64
+          key: ${{ runner.os }}-android-platform
+
+  build_ios:
+    runs-on: [self-hosted, macOS]
+    steps:
+      - uses: actions/checkout@v3
+      - name: "Unlock macmini keychain"
+        run: security unlock-keychain -p "${{ secrets.KEY_PASSWORD }}" login.keychain
+      - name: "Build ios app"
+        run: flutter build ios --release --no-codesign
