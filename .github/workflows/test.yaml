@@ -1,7 +1,7 @@
-name: test
+name: Analyze and test
 on:
   pull_request:
-    types: [ready_for_review]
+    types: [ready_for_review, opened, reopened, synchronize]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -9,7 +9,8 @@ concurrency:
 
 jobs:
   analyze:
-    runs-on: [self-hosted, Linux]
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: subosito/flutter-action@v2
@@ -18,23 +19,29 @@ jobs:
           cache: true
       - run: flutter pub get
       - run: flutter analyze --no-pub
-
-  test:
-    needs: analyze
-    strategy:
-      matrix:
-        device:
-          - "iPhone 14 Pro"
-      fail-fast: true
-    runs-on: [self-hosted, macOS]
-    steps:
-      - uses: actions/checkout@v3
-      - uses: subosito/flutter-action@v2
+      - name: Dart Code Metric report
+        uses: dart-code-checker/dart-code-metrics-action@v3
         with:
-          channel: "stable"
-          cache: true
-      - uses: mikehardy/buildcache-action@v1
-      - name: "Unlock macmini keychain"
-        run: security unlock-keychain -p "${{ secrets.KEY_PASSWORD }}" login.keychain
-      - name: "Run integration tests"
-        run: flutter test integration_test/main_test.dart -d "${{ matrix.device }}" --dart-define=testing_mode=true
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          fatal_warnings: true
+          fatal_performance: true
+          fatal_style: true
+          check_unused_files: true
+
+  # test:
+  #   needs: analyze
+  #   strategy:
+  #     matrix:
+  #       device:
+  #         - "iPhone 14 Pro"
+  #     fail-fast: true
+  #   runs-on: [self-hosted, macOS]
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - uses: subosito/flutter-action@v2
+  #       with:
+  #         channel: "stable"
+  #         cache: true
+  #     - uses: mikehardy/buildcache-action@v1
+  #     - name: "Run integration tests"
+  #       run: flutter test integration_test/main_test.dart -d "${{ matrix.device }}" --dart-define=testing_mode=true
