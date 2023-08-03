@@ -11,8 +11,8 @@ jobs:
   build_android:
     runs-on: [self-hosted, Linux]
     env:
-      JAVA_HOME: /opt/hostedtoolcache/Java_Zulu_jdk/11.0.18-10/x64
-      JAVA_HOME_11_X64: /opt/hostedtoolcache/Java_Zulu_jdk/11.0.18-10/x64
+      JAVA_HOME: /opt/hostedtoolcache/Java_Zulu_jdk/11.0.19-7/x64
+      JAVA_HOME_11_X64: /opt/hostedtoolcache/Java_Zulu_jdk/11.0.19-7/x64
       ANDROID_HOME: /home/runner/.android/sdk
       ANDROID_SDK_ROOT: /home/runner/.android/sdk
     steps:
@@ -24,7 +24,7 @@ jobs:
         with:
           path: |
             /home/runner/.android
-            /opt/hostedtoolcache/Java_Zulu_jdk/11.0.18-10/x64
+            ${{ env.JAVA_HOME }}
           key: ${{ runner.os }}-android-platform
 
       - name: Setup java env
@@ -50,7 +50,7 @@ jobs:
         with:
           path: |
             /home/runner/.android
-            /opt/hostedtoolcache/Java_Zulu_jdk/11.0.18-10/x64
+            ${{ env.JAVA_HOME }}
           key: ${{ runner.os }}-android-platform
 
   build_ios:
