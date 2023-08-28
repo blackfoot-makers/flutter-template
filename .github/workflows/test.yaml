@@ -28,6 +28,13 @@ jobs:
           fatal_style: true
           check_unused_files: true
 
+
+  upgrade:
+    if: contains(github.event.pull_request.labels.*.name, 'upgrade')
+    runs-on: [self-hosted, macOS]
+    steps:
+      - run: flutter upgrade
+
   # test:
   #   needs: analyze
   #   strategy:
