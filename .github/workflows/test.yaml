@@ -43,5 +43,8 @@ jobs:
   #         channel: "stable"
   #         cache: true
   #     - uses: mikehardy/buildcache-action@v1
+  #     - name: "Upgrade Flutter"
+  #       if: contains(github.event.pull_request.labels.*.name, 'upgrade')
+  #       run: flutter upgrade
   #     - name: "Run integration tests"
   #       run: flutter test integration_test/main_test.dart -d "${{ matrix.device }}" --dart-define=testing_mode=true
